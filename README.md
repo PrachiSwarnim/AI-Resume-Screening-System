@@ -1,4 +1,4 @@
-# 🌟 TalentIQ: The Future of AI Resume Screening
+# 🧠 TalentIQ: The Future of AI Resume Screening
 
 Welcome to **TalentIQ**! If you've ever felt the pain of manually sifting through hundreds of resumes, or dealt with broken ATS systems that unfairly reject great candidates, you're in the right place. 
 
