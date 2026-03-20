@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+PyPDF2
+pandas
+python-dotenv
+pydantic
+tenacity
+google-genai
+supabase
+huggingface_hub
