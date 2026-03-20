@@ -145,7 +145,7 @@ async def get_hf_analysis(prompt: str) -> str:
     active_model = HF_MODEL if HF_MODEL else "microsoft/Phi-3-mini-4k-instruct"
     
     # Official 2026 HF Router OpenAI-Compatible Endpoint
-    url = "https://router.huggingface.co/hf-inference/v1/chat/completions"
+    url = f"https://router.huggingface.co/hf-inference/models/{active_model}/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {hf_token}",
         "Content-Type": "application/json"
