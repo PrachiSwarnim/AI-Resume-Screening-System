@@ -173,7 +173,7 @@ async def analyze_resume(resume_text: str, job_description: str, filename: str) 
     3. MANDATORY ITEMS: You MUST return exactly 3 distinct 'strengths' and a MAXIMUM of 3 'gaps' (if applicable). Do not exceed 3 bullets for either section.
     4. TEMPORAL & EDUCATION (ABSOLUTE PROHIBITION):
        - TODAY'S DATE IS: {current_date} (Year 2026).
-       - ANY degree with "Expected 2025", "Pursuing 2025", "2025", or earlier is ALREADY COMPLETED because we are now in 2026.
+       - ANY degree with "Expected 2025", "Pursuing 2025", "2025", or earlier is ALREADY COMPLETED because we are now in 2026 and say them a recent graduate only if the graduation was 10 months back from current date.
        - You are STRICTLY FORBIDDEN from listing "Recent Graduation", "Education", "Degree Completion", or anything related to graduation timing as a gap.
        - If the candidate has a relevant degree, give full 10/10 education points. Do NOT penalize them.
        - If you cannot find any real technical skill gaps, return an EMPTY gaps list: "gaps": []
