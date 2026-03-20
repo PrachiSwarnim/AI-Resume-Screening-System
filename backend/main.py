@@ -41,7 +41,7 @@ hf_client = InferenceClient(token=hf_token) if hf_token else None
 
 # Default Models (Verified 2026 High-Availability IDs)
 GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
-HF_MODEL = os.getenv("HF_MODEL")
+HF_MODEL = os.getenv("HF_MODEL", "microsoft/Phi-3-mini-4k-instruct")
 
 # Supabase Storage Configuration
 supabase_url = os.getenv("SUPABASE_URL")
@@ -130,22 +130,42 @@ async def get_google_analysis(prompt: str) -> str:
 async def get_hf_analysis(prompt: str) -> str:
     if not hf_client:
         raise ValueError("Hugging Face API Token not set")
+    if not HF_MODEL:
+        raise ValueError("HF_MODEL secret not configured! Please add HF_MODEL to your GitHub Secrets.")
     
     messages = [
         {"role": "system", "content": "You are a technical recruiter. Return ONLY valid JSON."},
         {"role": "user", "content": prompt}
     ]
     
-    response = hf_client.chat_completion(
-        model=HF_MODEL,
-        messages=messages,
-        temperature=0.01, # Near-zero for stability
-        max_tokens=1000,
-    )
+    import urllib.request
+    import urllib.error
+
+    url = f"https://api-inference.huggingface.co/models/{HF_MODEL}/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {hf_token}",
+        "Content-Type": "application/json"
+    }
     
-    text = response.choices[0].message.content
-    text = text.replace("```json", "").replace("```", "").strip()
-    return text
+    payload = {
+        "model": HF_MODEL,
+        "messages": messages,
+        "temperature": 0.01,
+        "max_tokens": 1000
+    }
+    
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+    
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            text = result["choices"][0]["message"]["content"]
+            text = text.replace("```json", "").replace("```", "").strip()
+            return text
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode('utf-8')
+        raise Exception(f"Direct API Error {e.code}: {error_msg}")
 
 async def analyze_resume(resume_text: str, job_description: str, filename: str) -> AnalysisResult:
     current_date = datetime.now().strftime("%A, %B %d, %Y")
