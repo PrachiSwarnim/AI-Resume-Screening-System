@@ -8,4 +8,4 @@ pydantic
 tenacity
 google-genai
 supabase
-huggingface_hub
+huggingface_hub>=0.28.0

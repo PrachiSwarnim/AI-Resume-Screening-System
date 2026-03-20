@@ -138,38 +138,22 @@ async def get_hf_analysis(prompt: str) -> str:
         {"role": "user", "content": prompt}
     ]
     
-    import urllib.request
-    import urllib.error
-
-    # Ensure HF_MODEL is never blank if the GitHub Secret injection fails
+    # Ensure HF_MODEL is never blank
     active_model = HF_MODEL if HF_MODEL else "microsoft/Phi-3-mini-4k-instruct"
     
-    # Official 2026 HF Router OpenAI-Compatible Endpoint
-    url = f"https://router.huggingface.co/hf-inference/models/{active_model}/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {hf_token}",
-        "Content-Type": "application/json"
-    }
+    if not hf_client:
+        raise ValueError("Hugging Face API Token not set")
+
+    response = hf_client.chat_completion(
+        model=active_model,
+        messages=messages,
+        temperature=0.01, # Near-zero for stability
+        max_tokens=1000,
+    )
     
-    payload = {
-        "model": active_model,
-        "messages": messages,
-        "temperature": 0.01,
-        "max_tokens": 1000
-    }
-    
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(url, data=data, headers=headers, method='POST')
-    
-    try:
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode('utf-8'))
-            text = result["choices"][0]["message"]["content"]
-            text = text.replace("```json", "").replace("```", "").strip()
-            return text
-    except urllib.error.HTTPError as e:
-        error_msg = e.read().decode('utf-8')
-        raise Exception(f"Direct API Error {e.code}: {error_msg}")
+    text = response.choices[0].message.content
+    text = text.replace("```json", "").replace("```", "").strip()
+    return text
 
 async def analyze_resume(resume_text: str, job_description: str, filename: str) -> AnalysisResult:
     current_date = datetime.now().strftime("%A, %B %d, %Y")
