@@ -141,15 +141,18 @@ async def get_hf_analysis(prompt: str) -> str:
     import urllib.request
     import urllib.error
 
-    # Transitioned 2026 HF API Router Endpoint
-    url = f"https://router.huggingface.co/hf-inference/models/{HF_MODEL}/v1/chat/completions"
+    # Ensure HF_MODEL is never blank if the GitHub Secret injection fails
+    active_model = HF_MODEL if HF_MODEL else "microsoft/Phi-3-mini-4k-instruct"
+    
+    # Official 2026 HF Router OpenAI-Compatible Endpoint
+    url = "https://router.huggingface.co/hf-inference/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {hf_token}",
         "Content-Type": "application/json"
     }
     
     payload = {
-        "model": HF_MODEL,
+        "model": active_model,
         "messages": messages,
         "temperature": 0.01,
         "max_tokens": 1000
