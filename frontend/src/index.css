@@ -17,6 +17,15 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   overflow-x: hidden;
+  
+  /* Hide scrollbar for cleaner UI */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+body::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {
