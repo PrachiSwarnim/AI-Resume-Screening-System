@@ -27,6 +27,23 @@ TalentIQ is an AI-powered resume screening system designed to automate and optim
 2. Install dependencies: `npm install`.
 3. Start the dev server: `npm run dev`.
 
+## Deployment Strategy
+
+### 🚀 Backend: GCP Cloud Run
+1.  **Enable APIs**: Artifact Registry, Cloud Run, Cloud Build.
+2.  **Service Account**: Create a Service Account with `Roles/Editor` and `Roles/Cloud Run Admin`.
+3.  **GitHub Secrets**:
+    *   `GCP_PROJECT_ID`: Your GCP project ID.
+    *   `GCP_SA_KEY`: The JSON key of your Service Account.
+    *   `GEMINI_API_KEY`: Your Gemini key.
+    *   `SUPABASE_URL`, `SUPABASE_KEY`: Your Supabase creds.
+4.  **Action**: Push to `main` branch; our GitHub Action in `.github/workflows/deploy.yml` will handle the rest!
+
+### 🎨 Frontend: Vercel
+1.  Connect your repo to Vercel.
+2.  Add **Environment Variable**: `VITE_API_BASE_URL` (set to your **Cloud Run Service URL**).
+3.  Vercel handles all builds and SSL automatically.
+
 ## Architecture
-Modular design with a clear separation between the processing layer (FastAPI) and the consumption layer (React). AI calls are structured to return consistent JSON for direct frontend consumption.
+Hybrid serverless design. The FastAPI backend is containerized via **Docker** for GCP Cloud Run, ensuring zero-downtime scaling. The frontend is a SPA (Vite/React) deployed on edge networks via Vercel.
 "# AI-Resume-Screening-System" 

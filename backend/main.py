@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 from supabase import create_client, Client
+from datetime import datetime
 
 load_dotenv()
 
@@ -28,6 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# System Date Logger
+print(f"[{datetime.now().strftime('%H:%M:%S')}] Neural Engine Initialized. System Date: {datetime.now().strftime('%A, %B %d, %Y')}")
+
 # Clients Configuration
 google_api_key = os.getenv("GEMINI_API_KEY")
 google_client = genai.Client(api_key=google_api_key) if google_api_key else None
@@ -35,9 +39,9 @@ google_client = genai.Client(api_key=google_api_key) if google_api_key else None
 hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
 hf_client = InferenceClient(token=hf_token) if hf_token else None
 
-# Default Models
-GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
-HF_MODEL = os.getenv("HF_MODEL", "mistralai/Mistral-7B-Instruct-v0.2")
+# Default Models (Verified 2026 High-Availability IDs)
+GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
+HF_MODEL = os.getenv("HF_MODEL", "microsoft/Phi-3-mini-4k-instruct")
 
 # Supabase Storage Configuration
 supabase_url = os.getenv("SUPABASE_URL")
@@ -103,8 +107,8 @@ def is_retryable_error(exception):
     return any(k in error_str for k in retryable_keywords)
 
 @retry(
-    stop=stop_after_attempt(12), # More attempts for resilience
-    wait=wait_exponential(multiplier=1.5, min=2, max=60), # Faster initial retries
+    stop=stop_after_attempt(3), # Fail fast for better UX
+    wait=wait_exponential(multiplier=1, min=1, max=10), # Shorter wait windows
     retry=retry_if_exception(is_retryable_error),
     reraise=True
 )
@@ -144,58 +148,60 @@ async def get_hf_analysis(prompt: str) -> str:
     return text
 
 async def analyze_resume(resume_text: str, job_description: str, filename: str) -> AnalysisResult:
+    current_date = datetime.now().strftime("%A, %B %d, %Y")
     prompt = f"""
-    Analyze the following resume against the provided job description.
-    Current Date: Friday, March 20, 2026
+    ROLE: You are an elite Technical Recruiter and AI Architect.
+    DATE: {current_date}
     
-    Job Description:
-    {job_description}
+    TASK: Perform a high-precision semantic match between the Candidate Resume and the Job Description.
     
-    Resume Text:
-    {resume_text}
+    STRICT SCANNING RULES & SCORING WEIGHTS:
+    1. SCORING MATRIX (Calculate out of 100):
+       - Technical (50 Points): Give 50/50 if core frameworks (PyTorch/LLMs) are present.
+       - Experience (30 Points): Give 30/30 for recent 2025/2026 roles.
+       - Complexity (10 Points): Give 10/10 for RAG/Advanced projects.
+       - Education (10 Points): Give 10/10 for related degrees.
+    2. PERFECT SCORE RULE: If you find ZERO legitimate gaps, the final score MUST be between 95 and 100. Do not artificially lower the score!
+    3. MANDATORY ITEMS: You MUST return exactly 5 distinct 'strengths'. Do not group them.
+    4. TEMPORAL & EDUCATION: It is {current_date} (Year 2026). You MUST treat "Expected 2025" as a "Completed" B.Tech degree. NEVER list education as a gap.
+    5. FORMAT RULE (CRITICAL): Every single item in your lists MUST be formatted EXACTLY like this -> "Short Title: Description". You MUST use a colon (:).
+    6. LENGTH BALANCE: Keep descriptions informative but concise. Write 1 to 2 sentences per bullet point (roughly 20-30 words).
     
-    Provide the analysis in the following JSON format:
+    JSON FORMAT:
     {{
-        "name": "Candidate Name (extract from resume)",
+        "name": "Full Name",
         "score": 0-100,
-        "strengths": ["List of 3-5 key strengths, each formatted as 'Headline: Short explanation'"],
-        "gaps": ["List of key skill gaps, each formatted as 'Headline: Short explanation'"],
-        "recommendation": "Strong Fit / Moderate Fit / Not Fit",
-        "reasoning": "A brief explanation"
+        "strengths": [
+            "Skill Name: Write 1 to 2 clear, descriptive sentences here explaining the candidate's expertise.",
+            "Another Skill: Write another specific descriptive sentence here."
+        ],
+        "gaps": [
+            "Missing Tool: Write gap description here."
+        ],
+        "recommendation": "Strong Fit / Moderate Fit / Not a Fit",
+        "reasoning": "A professional summary."
     }}
     
-    Only return the JSON.
+    JOB DESCRIPTION:
+    {job_description}
+    
+    RESUME TEXT:
+    {resume_text}
     """
     
-    # Try Google First
+    # Strict Hugging Face Only Routing
     try:
-        response_text = await get_google_analysis(prompt)
-        result_json = json.loads(response_text)
-        result_json["filename"] = filename # Force original filename match
-        return AnalysisResult(**result_json)
-    except Exception as e:
-        # If Google fails (and we've finished retrying), try Hugging Face as a fallback
-        if hf_client:
-            try:
-                print(f"Google API failed for {filename}, falling back to Hugging Face...")
-                response_text = await get_hf_analysis(prompt)
-                result_json = json.loads(response_text)
-                result_json["filename"] = filename
-                return AnalysisResult(**result_json)
-            except Exception as hf_e:
-                print(f"Hugging Face fallback also failed: {str(hf_e)}")
+        if not hf_client:
+            raise ValueError("Hugging Face API Token not configured.")
         
-        # Final fallback to Mock
-        import random
-        return AnalysisResult(
-            name=filename.split('.')[0].replace('_', ' ').title(),
-            filename=filename,
-            score=random.randint(40, 95),
-            strengths=["Manual Review Needed"],
-            gaps=[f"AI Error: {str(e)}"],
-            recommendation="Review Required",
-            reasoning=f"Could not process resume with AI providers. Please check your API quotas."
-        )
+        print(f"Routing request exclusively to Hugging Face for {filename}...")
+        response_text = await get_hf_analysis(prompt)
+        result_json = json.loads(response_text)
+        result_json["filename"] = filename
+        return AnalysisResult(**result_json)
+    except Exception as hf_e:
+        print(f"Hugging Face processing failed: {str(hf_e)}")
+        raise HTTPException(status_code=500, detail=f"Hugging Face API unavailable: {str(hf_e)}")
 
 @app.post("/analyze", response_model=ScreeningResponse)
 async def analyze_resumes(

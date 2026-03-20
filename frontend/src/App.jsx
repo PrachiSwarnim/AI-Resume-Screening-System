@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -35,7 +35,8 @@ import {
   Settings,
   Terminal,
   Layers,
-  FileDown
+  FileDown,
+  Lock,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -52,11 +53,14 @@ const toTitleCase = (str) => {
 const parsePoint = (text) => {
   if (!text) return { title: '', description: '' };
   
-  if (text.includes(':')) {
-    const parts = text.split(':');
+  // Try colon first, then hyphen
+  const separator = text.includes(':') ? ':' : (text.includes(' - ') ? ' - ' : null);
+  
+  if (separator) {
+    const parts = text.split(separator);
     return {
       title: parts[0].trim(),
-      description: parts.slice(1).join(':').trim()
+      description: parts.slice(1).join(separator).trim()
     };
   }
   
@@ -79,7 +83,29 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [showDocs, setShowDocs] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const fileInputRef = useRef(null);
+
+  const loaderSteps = [
+    "Harvesting Talent Data...",
+    "Scanning Technical DNA...",
+    "Aligning Experience Vectors...",
+    "Benchmarking Skill Densities...",
+    "Synthesizing Recruiter Rationale...",
+    "Finalizing Performance Benchmarks..."
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (isAnalyzing) {
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % loaderSteps.length);
+      }, 2500);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
@@ -116,7 +142,7 @@ export default function App() {
       }, 100);
     } catch (err) {
       console.error(err);
-      setError('Analysis failed. Check backend connectivity.');
+      setError('Analysis failed. Check your API credentials or backend.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -415,7 +441,74 @@ export default function App() {
 
         <div className="w-full space-y-10 pb-16" id="results-section">
           <AnimatePresence mode="wait">
-            {!results ? (
+            {!results && isAnalyzing && (
+              <motion.div 
+                key="loader"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full min-h-[400px] flex flex-col items-center justify-center glass-panel rounded-[3.5rem] border border-white/5 relative overflow-hidden group py-20"
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent"></div>
+                
+                <div className="relative mb-12">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    className="w-32 h-32 md:w-40 md:h-40 rounded-full border-t-2 border-r-2 border-purple-500/20"
+                  />
+                  <motion.div 
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-2 rounded-full border-b-2 border-l-2 border-blue-500/20"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BrainCircuit className="w-12 h-12 text-purple-500 animate-pulse" />
+                  </div>
+                  
+                  <motion.div 
+                    animate={{ 
+                      y: [0, 160, 0],
+                      opacity: [0, 1, 0]
+                    }}
+                    transition={{ 
+                      duration: 3, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }}
+                    className="absolute -top-4 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent shadow-[0_0_15px_rgba(168,85,247,0.5)] z-20"
+                  />
+                </div>
+
+                <div className="relative z-10 space-y-4 max-w-md mx-auto">
+                  <AnimatePresence mode="wait">
+                    <motion.h3 
+                      key={loadingStep}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-xl md:text-2xl font-black uppercase tracking-[0.25em] text-white"
+                    >
+                      {loaderSteps[loadingStep]}
+                    </motion.h3>
+                  </AnimatePresence>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">
+                    Deploying Neural Screening Assets
+                  </p>
+                </div>
+                
+                <div className="mt-12 w-full max-w-xs h-1 px-4 bg-slate-950/40 rounded-full overflow-hidden border border-white/5">
+                  <motion.div 
+                    initial={{ x: "-100%" }}
+                    animate={{ x: "100%" }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-full h-full bg-gradient-to-r from-transparent via-purple-500 to-transparent"
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {!results && !isAnalyzing && (
               <motion.div 
                 key="empty"
                 initial={{ opacity: 0 }}
@@ -427,7 +520,9 @@ export default function App() {
                 <h3 className="text-xl font-black uppercase tracking-[0.2em] mb-2">Awaiting Stream</h3>
                 <p className="text-slate-700 text-[10px] font-bold uppercase tracking-widest">Pipeline output will populate here</p>
               </motion.div>
-            ) : (
+            )}
+
+            {results && (
               <motion.div 
                 key="results"
                 initial={{ opacity: 0 }}
