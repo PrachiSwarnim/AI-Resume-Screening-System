@@ -141,7 +141,8 @@ async def get_hf_analysis(prompt: str) -> str:
     import urllib.request
     import urllib.error
 
-    url = f"https://api-inference.huggingface.co/models/{HF_MODEL}/v1/chat/completions"
+    # Transitioned 2026 HF API Router Endpoint
+    url = f"https://router.huggingface.co/hf-inference/models/{HF_MODEL}/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {hf_token}",
         "Content-Type": "application/json"
