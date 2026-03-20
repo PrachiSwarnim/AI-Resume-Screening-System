@@ -41,6 +41,14 @@ async def analyze_resumes(
         blended = int(round(analysis.score * 0.7 + vector_score * 0.3))
         analysis.score = max(0, min(100, blended))
 
+        # Stage 4: Force recommendation to match final blended score
+        if analysis.score >= 85:
+            analysis.recommendation = "Strong Fit"
+        elif analysis.score >= 65:
+            analysis.recommendation = "Moderate Fit"
+        else:
+            analysis.recommendation = "Not a Fit"
+
         # Persistent storage (fires in background)
         await store_review(analysis, job_description)
         return analysis
