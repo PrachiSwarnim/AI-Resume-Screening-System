@@ -48,15 +48,15 @@ Want to take the engine for a spin on your own machine? It's easy!
 
 We didn't just build this to run locally; we engineered it for the cloud. TalentIQ features a fully automated, hands-free deployment pipeline.
 
-### The Backend: Google Cloud Run (Serverless)
-We use a **GitHub Actions Pipeline** (`.github/workflows/deploy.yml`) to automatically build and push our code to Google Cloud Run the second we type `git push origin main`.
-*   **How to authenticate:** Link your GCP Project via GitHub Secrets (`GCP_PROJECT_ID`, `GCP_SA_KEY`). 
-*   **The Magic:** GitHub automatically injects our Hugging Face and Supabase tokens directly into the secure cloud environment during the build.
+### The Backend: Render (Auto-Deploy PaaS)
+Every push to `main` automatically triggers a rebuild on **Render**. No Docker commands, no manual deploys—just push and go.
+*   **Environment Variables:** `HUGGINGFACE_API_TOKEN`, `HF_TOKEN`, `HF_MODEL`, `SUPABASE_URL`, and `SUPABASE_KEY` are securely managed via Render's Dashboard (never hardcoded).
+*   **The Architecture:** Render auto-detects Python, installs dependencies from `requirements.txt`, and boots the FastAPI engine via `uvicorn`.
 
 ### The Frontend: Vercel (Edge CDN)
 The React dashboard is hooked up to Vercel for instantaneous, globally distributed deployments.
 *   Because it's a Single Page Application, we use a custom `vercel.json` to ensure routing never breaks.
-*   The frontend talks to the Google Cloud Run server via a single environment variable: `VITE_API_BASE_URL`.
+*   The frontend talks to the Render backend via a single environment variable: `VITE_API_BASE_URL`.
 
 ---
 *Built with ❤️ for modern technical recruiters.*
