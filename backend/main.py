@@ -162,7 +162,7 @@ async def analyze_resume(resume_text: str, job_description: str, filename: str) 
        - Complexity (10 Points): Give 10/10 for RAG/Advanced projects.
        - Education (10 Points): Give 10/10 for related degrees.
     2. PERFECT SCORE RULE: If you find ZERO legitimate gaps, the final score MUST be between 95 and 100. Do not artificially lower the score!
-    3. MANDATORY ITEMS: You MUST return exactly 5 distinct 'strengths'. Do not group them.
+    3. MANDATORY ITEMS: You MUST return exactly 3 distinct 'strengths' and a MAXIMUM of 3 'gaps' (if applicable). Do not exceed 3 bullets for either section.
     4. TEMPORAL & EDUCATION: It is {current_date} (Year 2026). You MUST treat "Expected 2025" as a "Completed" B.Tech degree. NEVER list education as a gap.
     5. FORMAT RULE (CRITICAL): Every single item in your lists MUST be formatted EXACTLY like this -> "Short Title: Description". You MUST use a colon (:).
     6. LENGTH BALANCE: Keep descriptions informative but concise. Write 1 to 2 sentences per bullet point (roughly 20-30 words).
