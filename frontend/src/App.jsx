@@ -107,6 +107,19 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
+  // High-performance hardware-accelerated cursor tracking
+  const cursorRef = useRef(null);
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${e.clientX}px`;
+        cursorRef.current.style.top = `${e.clientY}px`;
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
     setResumes((prev) => [...prev, ...files]);
@@ -177,12 +190,31 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 overflow-x-hidden selection:bg-purple-500/30 selection:text-white">
-      <div className="fixed inset-0 -z-10 bg-[#020617]">
+      <div className="fixed inset-0 -z-10 bg-[#020617] overflow-hidden">
         <div className="absolute top-0 -left-[10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[160px] animate-pulse"></div>
         <div className="absolute bottom-0 -right-[10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[160px] animate-pulse animation-delay-2000"></div>
         <div className="absolute inset-0 bg-[#020617]/50 backdrop-blur-[1px]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px]"></div>
+        <div className="absolute inset-0 z-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px]"></div>
       </div>
+
+      {/* Raw CSS Flashlight ORB */}
+      <div 
+        ref={cursorRef}
+        style={{ 
+          position: 'fixed',
+          top: 0, 
+          left: 0, 
+          width: '600px', 
+          height: '600px', 
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0) 70%)',
+          filter: 'blur(40px)',
+          borderRadius: '50%',
+          transform: 'translate(-50%, -50%)', 
+          transition: 'left 0.1s linear, top 0.1s linear',
+          zIndex: 1,
+          pointerEvents: 'none'
+        }}
+      />
 
       <nav className="fixed top-0 w-full z-50 glass-panel border-b border-white/5 py-4 px-6 md:px-12 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
@@ -316,14 +348,24 @@ export default function App() {
             Recruiter Intelligence v2.0
           </motion.div>
           
-          <h1 className="text-6xl md:text-7xl lg:text-9xl font-black tracking-tight leading-[0.95] max-w-5xl mx-auto drop-shadow-2xl">
+          <motion.h1 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-6xl md:text-7xl lg:text-9xl font-black tracking-tight leading-[0.95] max-w-5xl mx-auto drop-shadow-2xl"
+          >
             Smarter talent <br />
             <span className="text-shimmer">discovery.</span>
-          </h1>
+          </motion.h1>
           
-          <p className="max-w-lg mx-auto text-slate-500 text-base md:text-lg font-medium leading-relaxed opacity-80">
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="max-w-lg mx-auto text-slate-500 text-base md:text-lg font-medium leading-relaxed opacity-80"
+          >
             Cut through the noise. Identify high-potential candidates with AI-driven technical screening.
-          </p>
+          </motion.p>
 
           <motion.div 
             initial={{ opacity: 0 }}
