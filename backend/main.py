@@ -192,16 +192,34 @@ async def analyze_resume(resume_text: str, job_description: str, filename: str) 
     # Strict Hugging Face Only Routing
     try:
         if not hf_client:
-            raise ValueError("Hugging Face API Token not configured.")
+            raise ValueError("Hugging Face API Token not configured in environment.")
         
         print(f"Routing request exclusively to Hugging Face for {filename}...")
         response_text = await get_hf_analysis(prompt)
+        
+        # Brutally aggressively sanitize JSON block
+        start_idx = response_text.find("{")
+        end_idx = response_text.rfind("}")
+        if start_idx != -1 and end_idx != -1:
+            response_text = response_text[start_idx:end_idx+1]
+            
         result_json = json.loads(response_text)
         result_json["filename"] = filename
         return AnalysisResult(**result_json)
+        
     except Exception as hf_e:
         print(f"Hugging Face processing failed: {str(hf_e)}")
-        raise HTTPException(status_code=500, detail=f"Hugging Face API unavailable: {str(hf_e)}")
+        # Instead of crashing FastAPI with a 500 error, return a pseudo-result 
+        # so the Frontend UI natively displays the backend error to the user!
+        return AnalysisResult(
+            name="Error Parsing Resume",
+            filename=filename,
+            score=0,
+            strengths=[f"BACKEND ERROR: {str(hf_e)}"],
+            gaps=["Your GitHub Secrets might be missing or the Hugging Face AI crashed."],
+            recommendation="Not a Fit",
+            reasoning=f"The backend AI engine crashed before generating the report. Error details: {str(hf_e)}"
+        )
 
 @app.post("/analyze", response_model=ScreeningResponse)
 async def analyze_resumes(
