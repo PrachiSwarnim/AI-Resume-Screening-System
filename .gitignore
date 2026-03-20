@@ -37,3 +37,6 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+
+DEPLOYMENT_GUIDE.md
+INTERNSHIP_SUBMISSION.md
