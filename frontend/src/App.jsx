@@ -155,7 +155,8 @@ export default function App() {
       }, 100);
     } catch (err) {
       console.error(err);
-      setError('Analysis failed. Check your API credentials or backend.');
+      const serverErrorMessage = err.response?.data?.detail;
+      setError(serverErrorMessage || 'Analysis failed. Check your API credentials or backend.');
     } finally {
       setIsAnalyzing(false);
     }
