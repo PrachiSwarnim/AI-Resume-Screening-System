@@ -171,12 +171,11 @@ async def analyze_resume(resume_text: str, job_description: str, filename: str) 
        - Education (10 Points): Give 10/10 for related degrees.
     2. PERFECT SCORE RULE: If you find ZERO legitimate gaps, the final score MUST be between 95 and 100. Do not artificially lower the score!
     3. MANDATORY ITEMS: You MUST return exactly 3 distinct 'strengths' and a MAXIMUM of 3 'gaps' (if applicable). Do not exceed 3 bullets for either section.
-    4. TEMPORAL & EDUCATION (ABSOLUTE PROHIBITION):
-       - TODAY'S DATE IS: {current_date} (Year 2026).
-       - Don't talk about the graduation year no need to mention it in the gaps.
-       - You are STRICTLY FORBIDDEN from listing "Recent Graduation", "Education", "Degree Completion", or anything related to graduation timing as a gap.
-       - If the candidate has a relevant degree, give full 10/10 education points. Do NOT penalize them.
-       - If you cannot find any real technical skill gaps, return an EMPTY gaps list: "gaps": []
+    4. GAPS MUST ONLY BE ABOUT MISSING TECHNICAL SKILLS (e.g., "Kubernetes", "GraphQL", "CI/CD Pipelines").
+       - NEVER mention education, graduation, degrees, B.Tech, university, or academic status in gaps.
+       - NEVER mention graduation year, completion date, or "recent graduate" in gaps.
+       - Gaps are ONLY for tools, frameworks, or technologies the job requires but the resume does NOT mention.
+       - If no technical skills are missing, return an EMPTY gaps list: "gaps": []
     5. FORMAT RULE (CRITICAL): Every single item in your lists MUST be formatted EXACTLY like this -> "Short Title: Description". You MUST use a colon (:).
     6. LENGTH BALANCE: Keep descriptions informative but concise. Write 1 to 2 sentences per bullet point (roughly 20-30 words).
     
@@ -218,6 +217,15 @@ async def analyze_resume(resume_text: str, job_description: str, filename: str) 
             
         result_json = json.loads(response_text)
         result_json["filename"] = filename
+        
+        # POST-PROCESSING: Hard-code strip any education/graduation gaps the AI might still hallucinate
+        banned_keywords = ["education", "graduation", "graduate", "degree", "b.tech", "university", "academic", "college", "completed in"]
+        if "gaps" in result_json:
+            result_json["gaps"] = [
+                gap for gap in result_json["gaps"]
+                if not any(kw in gap.lower() for kw in banned_keywords)
+            ]
+        
         return AnalysisResult(**result_json)
         
     except Exception as hf_e:
