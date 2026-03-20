@@ -41,7 +41,7 @@ hf_client = InferenceClient(token=hf_token) if hf_token else None
 
 # Default Models (Verified 2026 High-Availability IDs)
 GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
-HF_MODEL = os.getenv("HF_MODEL", "microsoft/Phi-3-mini-4k-instruct")
+HF_MODEL = os.getenv("HF_MODEL")
 
 # Supabase Storage Configuration
 supabase_url = os.getenv("SUPABASE_URL")
